@@ -4,7 +4,6 @@ node {
 stage ('build-test'){
        sh '''docker run -tid -p 8001:8000 --name containerdfirst $IMAGE:$VERSION'''
        sh '''docker ps'''
-       sh '''sleep 15s''
-       sh ''' curl 127.0.0.1:8001'''
+       sh '''sleep 15s'''
        }
 } 
