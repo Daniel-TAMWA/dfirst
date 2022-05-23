@@ -1,54 +1,33 @@
-node {
-    environment {
-        IMAGE_NAME = "web"
-        IMAGE_TAG = "latest"
+pipeline {
+    agent any
+
+    tools {
+        // Install the Maven version configured as "M3" and add it to the path.
+        maven "3.8.5"
     }
-    agent none
+
     stages {
-       stage('Build-clone'){
-           agent any
-           git 'https://github.com/Daniel-TAMWA/dfirst.git'
-       }
-       stage('Build image') {
-           agent any
-           steps {
-              script {
-                sh 'docker build -t .'
-              }
-           }
-       }
-       stage('Run container based on builded image') {
-          agent any
-          steps {
-            script {
-              sh '''
-                  docker run --name web1 -d -p 2368:2368 $IMAGE_NAME:$IMAGE_TAG
-                  sleep 5
-              '''
-             }
-          }
-       }
-       stage('Test image') {
-           agent any
-           steps {
-              script {
-                sh '''
-                   curl localhost | echo "Hello world!"
-                '''
-              }
-           }
-       }
-       stage('Clean container') {
-          agent any
-          steps {
-             script {
-               sh '''
-                   docker stop $IMAGE_NAME
-                   docker rm $IMAGE_NAME
-               '''
-             }
-          }
-      }
-     
+        stage('Build') {
+            steps {
+                // Get some code from a GitHub repository
+                git 'https://github.com/jglick/simple-maven-project-with-tests.git'
+
+                // Run Maven on a Unix agent.
+                sh "mvn -Dmaven.test.failure.ignore=true clean package"
+
+                // To run Maven on a Windows agent, use
+                // bat "mvn -Dmaven.test.failure.ignore=true clean package"
             }
+
+            post {
+                // If Maven was able to run the tests, even if some of the test
+                // failed, record the test results and archive the jar file.
+                success {
+                    junit '**/target/surefire-reports/TEST-*.xml'
+                    archiveArtifacts 'target/*.jar'
+                }
+            }
+        }
     }
+}
+
