@@ -1,0 +1,17 @@
+node{
+    stage('Build - Clone') {
+          git 'https://github.com/Daniel-TAMWA/dfirst.git'
+    }
+    def img = stage('Build') {
+          docker.build("$IMAGE",  '.')
+    }
+    stage('Build - Test') {
+            img.withRun("--name run-$BUILD_ID -p 8081:8000") { c ->
+            sh 'docker ps'
+            sh 'netstat -ntaup'
+            sh 'sleep 30s'
+            sh 'curl 127.0.0.1:8081'
+            sh 'docker ps'
+          }
+    }
+   
